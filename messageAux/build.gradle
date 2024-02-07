@@ -1,0 +1,61 @@
+buildscript {
+    repositories { flatDir name: 'libs', dirs: "../libs" }
+    dependencies { classpath 'com.hoddmimes.versionplugin:versionplugin:1.0' }
+}
+
+plugins {
+    id 'java'
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'com.hoddmimes.versionplugin'
+
+def trnsVrs = tasks.transformVersion.version()
+
+
+task buildMessageAuxJar (type: Jar) {
+    archiveBaseName = 'msgcodec'
+    destinationDirectory = file("../libs/")
+    archiveVersion = "$trnsVrs"
+
+    from('build/classes/java/main/') {
+        include '**/*.class'
+    }
+    doLast {
+        def msgcodecJar ="msgcodec-" + "$trnsVrs" + ".jar"
+        print("***** Built JAR $msgcodecJar\n")
+    }
+}
+
+
+task deleteMessageAuxJar( type: Delete ) {
+    def generateJar = "../libs/msgcodec-" + "$trnsVrs" + ".jar"
+    delete "$generateJar"
+
+
+    doLast {
+        print("***** Delete $generateJar")
+    }
+
+}
+
+classes.finalizedBy( buildMessageAuxJar )
+buildMessageAuxJar.dependsOn(deleteMessageAuxJar)
+clean.dependsOn(deleteMessageAuxJar)
+
+
+dependencies {
+    implementation group: 'org.agrona', name: 'agrona', version: '1.20.0'
+    implementation group: 'org.mongodb', name: 'mongo-java-driver', version: '3.8.2'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+test {
+    useJUnitPlatform()
+}

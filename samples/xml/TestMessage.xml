@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Messages mongoSupport="true">
+
+
+	<ConstantGroups prefix="Core">
+		<Group name="CG1">
+			<Constant id="X1"/>
+			<Constant id="X2"/>
+			<Constant id="X3"/>
+			<Constant id="X4"/>
+			<Constant id="X5"/>
+		</Group>
+		<Group name="CG2">
+			<Constant id="Y1" value="500"/>
+			<Constant id="Y2" value="501"/>
+			<Constant id="Y3" value="502"/>
+		</Group>
+	</ConstantGroups>
+
+	<Message name="TestMessageBase">
+		<Attribute name="baseString" type="String"/>
+		<Attribute name="baseInt" type="int"/>
+	</Message>
+
+
+	<Message name="TestSubMessage">
+		<Attribute name="subIntValue" type="int"/>
+		<Attribute name="subStrValue" type="String"/>
+		<Attribute name="subStringArray" type="String" list="array"/>
+		<Attribute name="subIntArray" type="int" list="array"/>
+	</Message>
+
+
+	<Message name="TestMessage" extends="TestMessageBase" rootMessage="true" db="true" dbCollection="Test">
+		<Attribute name="booleanValue" type="boolean"/>
+		<Attribute name="byteValue" type="byte"/>
+		<Attribute name="shortValue" type="short"/>
+		<Attribute name="intValue" type="int" dbKey="not-unique"/>
+		<Attribute name="longValue" type="long"/>
+		<Attribute name="floatValue" type="float"/>
+		<Attribute name="doubleValue" type="double"/>
+		<Attribute name="stringValue" type="String" dbKey="not-unique"/>
+		<Attribute name="constValue" constantGroup="CG1"/>
+		<Attribute name="byteArray" type="byte[]"/>
+		<Attribute name="mapValue" type="Map"/>
+		<Attribute name="dateValue" type="LocalDate"/>
+		<Attribute name="dateTimeValue" type="LocalDateTime"/>
+		<Attribute name="msgValue" type="TestSubMessage"/>
+
+		<Attribute name="booleanList" type="boolean" list="array"/>
+		<Attribute name="shortList" type="short"  list="array"/>
+		<Attribute name="intList" type="int" list="array"/>
+		<Attribute name="longList" type="long" list="array"/>
+		<Attribute name="floatList" type="float" list="array"/>
+		<Attribute name="doubleList" type="double" list="array"/>
+		<Attribute name="stringList" type="String" list="array"/>
+		<Attribute name="constList" constantGroup="CG1" list="array"/>
+		<Attribute name="byteList" type="byte[]" list="array"/>
+		<Attribute name="mapList" type="Map" list="array"/>
+		<Attribute name="dateList" type="LocalDate" list="array"/>
+		<Attribute name="dateTimeList" type="LocalDateTime" list="array"/>
+		<Attribute name="msgList" type="TestSubMessage" list="array"/>
+	</Message>
+
+
+	<!--
+		Create CAR benchmark objects
+
+
+	<Message name="Car">
+		<Attribute name="serialNumber" type="int"/>
+		<Attribute name="modelYear" type="short"/>
+		<Attribute name="avaiable" type="boolean"/>
+		<Attribute name="code" type="byte"/>
+		<Attribute name="someNumbers" type="int" list="array"/>
+		<Attribute name="vehicleCode" type="String"/>
+		<Attribute name="extras" type="byte"/>
+		<Attribute name="engine" type="Engine"/>
+		<Attribute name="fuelFigures" type="FuelFigures" list="array"/>
+		<Attribute name="performanceFigures" type="PerformanceFigures" list="array"/>
+		<Attribute name="manufacturer" type="String"/>
+		<Attribute name="model" type="String"/>
+	</Message>
+
+
+	<Message name="Acceleration">
+		<Attribute name="mph" type="short"/>
+		<Attribute name="seconds" type="float"/>
+	</Message>
+
+	<Message name="FuelFigures">
+		<Attribute name="mpg" type="float"/>
+		<Attribute name="speed" type="short"/>
+	</Message>
+
+	<Message name="PerformanceFigures">
+		<Attribute name="octaneRating" type="byte"/>
+		<Attribute name="acceleration" type="Acceleration" list="array"/>
+	</Message>
+
+
+	<Message name="Engine">
+		<Attribute name="capacity" type="short"/>
+		<Attribute name="numCylinders" type="byte"/>
+		<Attribute name="maxRpm" type="short"/>
+		<Attribute name="manufacturerCode" type="String"/>
+		<Attribute name="fuel" type="byte"/>
+	</Message>
+
+	-->
+
+</Messages>

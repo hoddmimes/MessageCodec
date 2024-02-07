@@ -1,0 +1,8 @@
+rootProject.name = 'MessageCodec'
+include 'messageGenerate'
+include 'messageAux'
+include 'samples'
+include 'online'
+include 'tomcat'
+
+

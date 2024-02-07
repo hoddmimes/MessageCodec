@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MessageFiles>
+	<!-- Generate a single message factory for all messages defined in the "MessageFile" files found -->
+	<!-- If you do not like to generate a MessageFactory just comment out next line -->
+	<MessageFactory outPath="./src/main/java/generated/" package="generated"/>
+
+	<!-- Generates Mongo auxiliary CRUD and find methods for the structures defined in the "MessageFile" files found -->
+	<!-- If you do not like to Mongo auxiliary support to be generated, comment out next line -->
+	<MongoAux outPath="./src/main/java/generated/" package="generated"/>
+
+	<!-- Generate POJO objects with Binary codec support based upon the definition found in the file -->
+	<!-- You may have multiple "MessageFile" entries -->
+	<MessageFile  file="./xml/TestMessage.xml" outPath="./src/main/java/generated/" package="generated" messageBase="3"/>
+</MessageFiles>
+
+
