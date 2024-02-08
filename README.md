@@ -135,7 +135,7 @@ The file runGenerate.sh do this for you i.e. generate the test files.
 </Messages>
 </small>
 
-**the generated POJO/JSON object based upon the definition above can be viewed here: [TestMessage.java](https://github.com/hoddmimes/json-transform/blob/master/samples/src/main/java/generated/TestMessage.java)**
+**the generated POJO/JSON object based upon the definition above can be viewed here: [TestMessage.java](https://github.com/hoddmimes/MessageCodec/blob/master/samples/src/main/java/generated/TestMessage.java)**
 
 ### Message Extensions
 The natural way of extending message is to subclass a generated POJO message object However there is also a _dirty way_ of adding implementation to a generated POJO message by adding the code 
@@ -186,7 +186,7 @@ public int incrementFoo( int pIncrementValue )
 
 ## Mongo Support
 Optionally message objects can also be generated to support Mongo encode/decoding by implementing the interface
-[MessageMongoInterface.java]([https://github.com/hoddmimes/json-transform/blob/master/sample/java/main/com/hoddmimes/json-transform/MessageMongoInterface.java](https://github.com/hoddmimes/json-transform/blob/master/sample/java/main/com/hoddmimes/jsontransform/MessageMongoInterface.java))
+[MessageMongoInterface.java]([https://github.com/hoddmimes/MessageCodec/blob/master/sample/java/main/com/hoddmimes/json-transform/MessageMongoInterface.java](https://github.com/hoddmimes/json-transform/blob/master/sample/java/main/com/hoddmimes/jsontransform/MessageMongoInterface.java))
 
 Three optional directives rules which and how message objects  implements Mongo support.
  * On a top level <Messages *mongoSupport="true"*> the attribute *mongoSupport* rules whatever the message definitions in the XML files
@@ -199,15 +199,15 @@ Three optional directives rules which and how message objects  implements Mongo 
  This will result in that the attribute will not be written/retrieved to/from Mongo.
 
 In addition, a class MongoAux.java is generated. This class implements convince methods for creating a database, dropping a database and CRUD methods for handling the message POJO interaction with Mongo.
-The files XML topfile, in the example  [TestMessageFileSet.xml]([https://github.com/hoddmimes/json-transform/blob/master/samples/xml/TestMessagesFileSet.xml](https://github.com/hoddmimes/json-transform/blob/master/sample/xml/TestMessagesFileSet.xml)) defines whatever the class MongoAux.java should be generated or not.
+The files XML topfile, in the example  [TestMessageFileSet.xml]([https://github.com/hoddmimes/MessageCodec/blob/master/samples/xml/TestMessagesFileSet.xml](https://github.com/hoddmimes/json-transform/blob/master/sample/xml/TestMessagesFileSet.xml)) defines whatever the class MongoAux.java should be generated or not.
 
 
 ## Sample TestMessageCoding.java
-the file [TestMessageCoding.java]([https://github.com/hoddmimes/json-transform/blob/master/samples/java/test/test/TestEncodeDecode.java](https://github.com/hoddmimes/json-transform/blob/master/sample/java/test/test/TestEncodeDecode.java))
+the file [TestMessageCoding.java]([https://github.com/hoddmimes/MessageCodec/blob/master/samples/java/test/test/TestEncodeDecode.java](https://github.com/hoddmimes/json-transform/blob/master/sample/java/test/test/TestEncodeDecode.java))
 exemplfies how encode/encode a Java POJO class.
 
 ## Sample TestMessageMongo.java
-the file [TestMessageMongo.java]([https://github.com/hoddmimes/json-transform/blob/master/samples/java/test/test/TestMongoSupport.java](https://github.com/hoddmimes/json-transform/blob/master/sample/java/test/test/TestMongoSupport.java))
+the file [TestMessageMongo.java]([https://github.com/hoddmimes/MessageCodec/blob/master/samples/java/test/test/TestMongoSupport.java](https://github.com/hoddmimes/json-transform/blob/master/sample/java/test/test/TestMongoSupport.java))
 exemplfies how encode/encode a Java POJO class to Mongo DB documents. It also exemplifies how to use the generated Mongo auxiliary methods in the class [MongoAux]([[https://github.com/hoddmimes/json-transform/blob/master/sample/java/main/generated/MongoAux.java](https://github.com/hoddmimes/json-transform/blob/master/sample/java/main/generated/MongoAux.java)) to create,delete,find and update POJO objects in a Mongo DB.
 
 The test assumes that there is a local Mongo DB instance without any authentication enabled.

@@ -16,6 +16,17 @@ apply plugin: 'com.hoddmimes.versionplugin'
 
 def trnsVrs = tasks.transformVersion.version()
 
+
+spotless {
+    java {
+        toggleOffOn()
+        eclipse().configFile("${project.rootDir}/tools/eclipse-java-formatter.xml")
+        indentWithSpaces()
+        removeUnusedImports()
+    }
+}
+
+
 tasks.register('generateTestClasses', JavaExec) {
     mainClass = 'MessageGenerate'
     classpath = project.project(':messageGenerate').sourceSets.main.runtimeClasspath
