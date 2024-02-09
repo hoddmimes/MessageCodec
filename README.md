@@ -1,18 +1,18 @@
 # MessageCodec
 
 
-This is a convenience tool for generating Java POJO Message object with optional POJO Mongo support and Message factory for the POJO message objects creation.
+This is a convenience tool for generating Java POJO Message targeting application having a need for low-latency communication. 
 
 The generated Java POJO objects have the ability to encode itself to binary objects being byte vectors. POJO message objects can furthermore be created/instasited 
 from an encoded byte vector.  
 
 
-From the XML definitions the POJOs message objects are generated. Furthermore there is support for the generated POJO messages to encode / decode them self to Mongo documents.
+From the XML definitions the POJOs message objects are generated. Furthermore there is optional support for the generated POJO messages to encode / decode them self to Mongo documents.
 For more information about the Mongo support see section *Mongo Support* below.
 
 The typical use for having POJO message objects is when having a need for exchaning _message objects_ over a network connection.
 The encoding/decoding is highly efficient when it comes to latency and message size, typically required by application with 
-large message volumes and high latency requirements. 
+large message volumes and high latency requirements. Encoding / decoding of message are typically around 100-400 nanoseconds.
 
 
 
