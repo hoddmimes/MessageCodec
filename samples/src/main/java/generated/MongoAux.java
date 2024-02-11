@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c)  Hoddmimes Solution AB 2021.
  *
@@ -18,382 +17,357 @@
 
 package generated;
 
-
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
-import com.mongodb.client.*;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class MongoAux {
-    private final String mDbName;
-    private final String mDbHost;
-    private final int mDbPort;
+  private String mDbName;
+  private String mDbHost;
+  private int mDbPort;
 
-    private MongoClient mClient;
-    private MongoDatabase mDb;
+  private MongoClient mClient;
+  private MongoDatabase mDb;
 
-    private MongoCollection mTestCollection;
+  private MongoCollection mTestCollection;
 
-    public MongoAux(String pDbName, String pDbHost, int pDbPort) {
-        mDbName = pDbName;
-        mDbHost = pDbHost;
-        mDbPort = pDbPort;
+  public MongoAux(String pDbName, String pDbHost, int pDbPort) {
+    mDbName = pDbName;
+    mDbHost = pDbHost;
+    mDbPort = pDbPort;
+  }
+
+  public void connectToDatabase() {
+    try {
+      mClient = new MongoClient(mDbHost, mDbPort);
+      mDb = mClient.getDatabase(mDbName);
+
+      mTestCollection = mDb.getCollection("Test");
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void dropDatabase() {
+    MongoClient tClient = new MongoClient(mDbHost, mDbPort);
+    MongoDatabase tDb = tClient.getDatabase(mDbName);
+
+    try {
+      tDb.drop();
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      if (mClient != null) {
+        mClient.close();
+      }
+      mDb = null;
+
+      mTestCollection = null;
+    }
+  }
+
+  private void close() {
+    if (mClient != null) {
+      mClient.close();
+      mDb = null;
+
+      mTestCollection = null;
+    }
+  }
+
+  private void createCollection(String pCollectionName, List<DbKey> pKeys, Bson pValidator) {
+    MongoClient tClient = new MongoClient(mDbHost, mDbPort);
+    MongoDatabase db = tClient.getDatabase(mDbName);
+
+    // ValidationOptions validationOptions = new ValidationOptions().validator(pValidator);
+    // CreateCollectionOptions tOptions = new
+    // CreateCollectionOptions().validationOptions(validationOptions);
+    // db.createCollection(pCollectionName, tOptions );
+    db.createCollection(pCollectionName);
+
+    MongoCollection tCollection = db.getCollection(pCollectionName);
+    if (pKeys != null) {
+      for (DbKey dbk : pKeys) {
+        tCollection.createIndex(
+            new BasicDBObject(dbk.mKeyName, 1), new IndexOptions().unique(dbk.mUnique));
+      }
+    }
+    tClient.close();
+  }
+
+  private boolean collectionExit(
+      String pCollectionName, MongoIterable<String> pCollectionNameNames) {
+    MongoCursor<String> tItr = pCollectionNameNames.iterator();
+    while (tItr.hasNext()) {
+      String tName = tItr.next();
+      if (tName.compareTo(pCollectionName) == 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void createDatabase(boolean pReset) {
+    this.close();
+    MongoClient mClient = new MongoClient(mDbHost, mDbPort);
+    MongoDatabase tDB = mClient.getDatabase(mDbName);
+    MongoIterable<String> tCollectionNames = tDB.listCollectionNames();
+
+    if ((pReset) || (!collectionExit("Test", tCollectionNames))) {
+      createTestCollection();
+    }
+  }
+
+  private void createTestCollection() {
+    ArrayList<DbKey> tKeys = new ArrayList<>();
+
+    tKeys.add(new DbKey("intValue", false));
+    tKeys.add(new DbKey("stringValue", false));
+
+    createCollection("Test", tKeys, null);
+  }
+
+  public MongoCollection getTestCollection() {
+    return mTestCollection;
+  }
+
+  /** CRUD DELETE methods */
+  public long deleteTestMessage(Bson pFilter) {
+    DeleteResult tResult = mTestCollection.deleteMany(pFilter);
+    return tResult.getDeletedCount();
+  }
+
+  public long deleteTestMessageByMongoId(String pMongoObjectId) {
+    Bson tFilter = Filters.eq("_id", new ObjectId(pMongoObjectId));
+    DeleteResult tResult = mTestCollection.deleteOne(tFilter);
+    return tResult.getDeletedCount();
+  }
+
+  public long deleteTestMessage(int pIntValue, String pStringValue) {
+
+    Bson tKeyFilter =
+        Filters.and(Filters.eq("intValue", pIntValue), Filters.eq("stringValue", pStringValue));
+
+    DeleteResult tResult = mTestCollection.deleteMany(tKeyFilter);
+    return tResult.getDeletedCount();
+  }
+
+  public long deleteTestMessageByIntValue(int pIntValue) {
+
+    Bson tKeyFilter = Filters.eq("intValue", pIntValue);
+    DeleteResult tResult = mTestCollection.deleteMany(tKeyFilter);
+    return tResult.getDeletedCount();
+  }
+
+  public long deleteTestMessageByStringValue(String pStringValue) {
+
+    Bson tKeyFilter = Filters.eq("stringValue", pStringValue);
+    DeleteResult tResult = mTestCollection.deleteMany(tKeyFilter);
+    return tResult.getDeletedCount();
+  }
+
+  /** CRUD INSERT methods */
+  public void insertTestMessage(TestMessage pTestMessage) {
+    Document tDoc = pTestMessage.getMongoDocument();
+    mTestCollection.insertOne(tDoc);
+    ObjectId _tId = tDoc.getObjectId("_id");
+    if (_tId != null) {
+      pTestMessage.setMongoId(_tId.toString());
+    }
+  }
+
+  public void insertTestMessage(List<TestMessage> pTestMessageList) {
+    List<Document> tList =
+        pTestMessageList.stream().map(TestMessage::getMongoDocument).collect(Collectors.toList());
+    mTestCollection.insertMany(tList);
+    for (int i = 0; i < tList.size(); i++) {
+      ObjectId _tId = tList.get(i).getObjectId("_id");
+      if (_tId != null) {
+        pTestMessageList.get(i).setMongoId(_tId.toString());
+      }
+    }
+  }
+
+  /** CRUD UPDATE (INSERT) methods */
+  public UpdateResult updateTestMessageByMongoId(String pMongoObjectId, TestMessage pTestMessage) {
+    Bson tFilter = Filters.eq("_id", new ObjectId(pMongoObjectId));
+    Document tDocSet = new Document("$set", pTestMessage.getMongoDocument());
+    UpdateResult tUpdSts = mTestCollection.updateOne(tFilter, tDocSet, new UpdateOptions());
+    return tUpdSts;
+  }
+
+  public UpdateResult updateTestMessage(TestMessage pTestMessage, boolean pUpdateAllowInsert) {
+    UpdateOptions tOptions = new UpdateOptions().upsert(pUpdateAllowInsert);
+
+    Bson tKeyFilter =
+        Filters.and(
+            Filters.eq("intValue", pTestMessage.getIntValue()),
+            Filters.eq("stringValue", pTestMessage.getStringValue()));
+
+    Document tDocSet = new Document("$set", pTestMessage.getMongoDocument());
+
+    UpdateResult tUpdSts = mTestCollection.updateOne(tKeyFilter, tDocSet, tOptions);
+    return tUpdSts;
+  }
+
+  // Error?
+  public UpdateResult updateTestMessage(
+      int pIntValue, String pStringValue, TestMessage pTestMessage, boolean pUpdateAllowInsert) {
+    UpdateOptions tOptions = new UpdateOptions().upsert(pUpdateAllowInsert);
+
+    Bson tKeyFilter =
+        Filters.and(Filters.eq("intValue", pIntValue), Filters.eq("stringValue", pStringValue));
+
+    Document tDocSet = new Document("$set", pTestMessage.getMongoDocument());
+
+    UpdateResult tUpdSts = mTestCollection.updateOne(tKeyFilter, tDocSet, tOptions);
+    return tUpdSts;
+  }
+
+  public UpdateResult updateTestMessage(
+      Bson pFilter, TestMessage pTestMessage, boolean pUpdateAllowInsert) {
+    UpdateOptions tOptions = new UpdateOptions().upsert(pUpdateAllowInsert);
+    Document tDocSet = new Document("$set", pTestMessage.getMongoDocument());
+    UpdateResult tUpdSts = mTestCollection.updateOne(pFilter, tDocSet, tOptions);
+    return tUpdSts;
+  }
+
+  /** CRUD FIND methods */
+  public List<TestMessage> findTestMessage(Bson pFilter) {
+    return findTestMessage(pFilter, null);
+  }
+
+  public List<TestMessage> findTestMessage(Bson pFilter, Bson pSortDoc) {
+
+    FindIterable<Document> tDocuments =
+        (pSortDoc == null)
+            ? this.mTestCollection.find(pFilter)
+            : this.mTestCollection.find(pFilter).sort(pSortDoc);
+
+    if (tDocuments == null) {
+      return null;
     }
 
-    public void connectToDatabase() {
-        try {
-            mClient = new MongoClient(mDbHost, mDbPort);
-            mDb = mClient.getDatabase(mDbName);
+    List<TestMessage> tResult = new ArrayList<>();
+    MongoCursor<Document> tIter = tDocuments.iterator();
+    while (tIter.hasNext()) {
+      Document tDoc = tIter.next();
+      TestMessage tTestMessage = new TestMessage();
+      tTestMessage.decodeMongoDocument(tDoc);
+      tResult.add(tTestMessage);
+    }
+    return tResult;
+  }
 
-            mTestCollection = mDb.getCollection("Test");
+  public List<TestMessage> findAllTestMessage() {
+    List<TestMessage> tResult = new ArrayList<>();
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    FindIterable<Document> tDocuments = this.mTestCollection.find();
+    MongoCursor<Document> tIter = tDocuments.iterator();
+    while (tIter.hasNext()) {
+      Document tDoc = tIter.next();
+      TestMessage tTestMessage = new TestMessage();
+      tTestMessage.decodeMongoDocument(tDoc);
+      tResult.add(tTestMessage);
+    }
+    return tResult;
+  }
+
+  public TestMessage findTestMessageByMongoId(String pMongoObjectId) {
+    Bson tFilter = Filters.eq("_id", new ObjectId(pMongoObjectId));
+
+    FindIterable<Document> tDocuments = this.mTestCollection.find(tFilter);
+    if (tDocuments == null) {
+      return null;
     }
 
-    public void dropDatabase() {
-        MongoClient tClient = new MongoClient(mDbHost, mDbPort);
-        MongoDatabase tDb = tClient.getDatabase(mDbName);
+    List<TestMessage> tResult = new ArrayList<>();
+    MongoCursor<Document> tIter = tDocuments.iterator();
+    while (tIter.hasNext()) {
+      Document tDoc = tIter.next();
+      TestMessage tTestMessage = new TestMessage();
+      tTestMessage.decodeMongoDocument(tDoc);
+      tResult.add(tTestMessage);
+    }
+    return (tResult.size() > 0) ? tResult.get(0) : null;
+  }
 
+  public List<TestMessage> findTestMessage(int pIntValue, String pStringValue) {
 
-        try {
-            tDb.drop();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (mClient != null) {
-                mClient.close();
-            }
-            mDb = null;
+    Bson tKeyFilter =
+        Filters.and(Filters.eq("intValue", pIntValue), Filters.eq("stringValue", pStringValue));
 
-            mTestCollection = null;
-
-        }
+    FindIterable<Document> tDocuments = this.mTestCollection.find(tKeyFilter);
+    if (tDocuments == null) {
+      return null;
     }
 
-    private void close() {
-        if (mClient != null) {
-            mClient.close();
-            mDb = null;
-
-
-            mTestCollection = null;
-
-        }
+    List<TestMessage> tResult = new ArrayList<>();
+    MongoCursor<Document> tIter = tDocuments.iterator();
+    while (tIter.hasNext()) {
+      Document tDoc = tIter.next();
+      TestMessage tTestMessage = new TestMessage();
+      tTestMessage.decodeMongoDocument(tDoc);
+      tResult.add(tTestMessage);
     }
+    return tResult;
+  }
 
+  public List<TestMessage> findTestMessageByIntValue(int pIntValue) {
+    List<TestMessage> tResult = new ArrayList<>();
 
-    private void createCollection(String pCollectionName, List<DbKey> pKeys, Bson pValidator) {
-        MongoClient tClient = new MongoClient(mDbHost, mDbPort);
-        MongoDatabase db = tClient.getDatabase(mDbName);
+    Bson tKeyFilter = Filters.eq("intValue", pIntValue);
 
-        //ValidationOptions validationOptions = new ValidationOptions().validator(pValidator);
-        //CreateCollectionOptions tOptions = new CreateCollectionOptions().validationOptions(validationOptions);
-        //db.createCollection(pCollectionName, tOptions );
-        db.createCollection(pCollectionName);
-
-        MongoCollection tCollection = db.getCollection(pCollectionName);
-        if (pKeys != null) {
-            for (DbKey dbk : pKeys) {
-                tCollection.createIndex(new BasicDBObject(dbk.mKeyName, 1), new IndexOptions().unique(dbk.mUnique));
-            }
-        }
-        tClient.close();
+    FindIterable<Document> tDocuments = this.mTestCollection.find(tKeyFilter);
+    MongoCursor<Document> tIter = tDocuments.iterator();
+    while (tIter.hasNext()) {
+      Document tDoc = tIter.next();
+      TestMessage tTestMessage = new TestMessage();
+      tTestMessage.decodeMongoDocument(tDoc);
+      tResult.add(tTestMessage);
     }
+    return tResult;
+  }
 
+  public List<TestMessage> findTestMessageByStringValue(String pStringValue) {
+    List<TestMessage> tResult = new ArrayList<>();
 
-    private boolean collectionExit(String pCollectionName, MongoIterable<String> pCollectionNameNames) {
-        MongoCursor<String> tItr = pCollectionNameNames.iterator();
-        while (tItr.hasNext()) {
-            String tName = tItr.next();
-            if (tName.compareTo(pCollectionName) == 0) {
-                return true;
-            }
-        }
-        return false;
+    Bson tKeyFilter = Filters.eq("stringValue", pStringValue);
+
+    FindIterable<Document> tDocuments = this.mTestCollection.find(tKeyFilter);
+    MongoCursor<Document> tIter = tDocuments.iterator();
+    while (tIter.hasNext()) {
+      Document tDoc = tIter.next();
+      TestMessage tTestMessage = new TestMessage();
+      tTestMessage.decodeMongoDocument(tDoc);
+      tResult.add(tTestMessage);
     }
+    return tResult;
+  }
 
+  class DbKey {
+    String mKeyName;
+    boolean mUnique;
 
-    public void createDatabase(boolean pReset) {
-        this.close();
-        MongoClient mClient = new MongoClient(mDbHost, mDbPort);
-        MongoDatabase tDB = mClient.getDatabase(mDbName);
-        MongoIterable<String> tCollectionNames = tDB.listCollectionNames();
-
-
-        if ((pReset) || (!collectionExit("Test", tCollectionNames))) {
-            createTestCollection();
-        }
-
+    DbKey(String pKeyName, boolean pUnique) {
+      mKeyName = pKeyName;
+      mUnique = pUnique;
     }
-
-
-    private void createTestCollection() {
-        ArrayList<DbKey> tKeys = new ArrayList<>();
-
-        tKeys.add(new DbKey("intValue", false));
-        tKeys.add(new DbKey("stringValue", false));
-
-        createCollection("Test", tKeys, null);
-    }
-
-    public MongoCollection getTestCollection() {
-        return mTestCollection;
-    }
-
-    /**
-     * CRUD DELETE methods
-     */
-    public long deleteTestMessage(Bson pFilter) {
-        DeleteResult tResult = mTestCollection.deleteMany(pFilter);
-        return tResult.getDeletedCount();
-    }
-
-    public long deleteTestMessageByMongoId(String pMongoObjectId) {
-        Bson tFilter = Filters.eq("_id", new ObjectId(pMongoObjectId));
-        DeleteResult tResult = mTestCollection.deleteOne(tFilter);
-        return tResult.getDeletedCount();
-    }
-
-
-    public long deleteTestMessage(int pIntValue, String pStringValue) {
-
-        Bson tKeyFilter = Filters.and(
-                Filters.eq("intValue", pIntValue),
-                Filters.eq("stringValue", pStringValue));
-
-        DeleteResult tResult = mTestCollection.deleteMany(tKeyFilter);
-        return tResult.getDeletedCount();
-    }
-
-    public long deleteTestMessageByIntValue(int pIntValue) {
-
-        Bson tKeyFilter = Filters.eq("intValue", pIntValue);
-        DeleteResult tResult = mTestCollection.deleteMany(tKeyFilter);
-        return tResult.getDeletedCount();
-    }
-
-    public long deleteTestMessageByStringValue(String pStringValue) {
-
-        Bson tKeyFilter = Filters.eq("stringValue", pStringValue);
-        DeleteResult tResult = mTestCollection.deleteMany(tKeyFilter);
-        return tResult.getDeletedCount();
-    }
-
-    /**
-     * CRUD INSERT methods
-     */
-    public void insertTestMessage(TestMessage pTestMessage) {
-        Document tDoc = pTestMessage.getMongoDocument();
-        mTestCollection.insertOne(tDoc);
-        ObjectId _tId = tDoc.getObjectId("_id");
-        if (_tId != null) {
-            pTestMessage.setMongoId(_tId.toString());
-        }
-    }
-
-    public void insertTestMessage(List<TestMessage> pTestMessageList) {
-        List<Document> tList = pTestMessageList.stream().map(TestMessage::getMongoDocument).collect(Collectors.toList());
-        mTestCollection.insertMany(tList);
-        for (int i = 0; i < tList.size(); i++) {
-            ObjectId _tId = tList.get(i).getObjectId("_id");
-            if (_tId != null) {
-                pTestMessageList.get(i).setMongoId(_tId.toString());
-            }
-        }
-    }
-
-
-    /**
-     * CRUD UPDATE (INSERT) methods
-     */
-    public UpdateResult updateTestMessageByMongoId(String pMongoObjectId, TestMessage pTestMessage) {
-        Bson tFilter = Filters.eq("_id", new ObjectId(pMongoObjectId));
-        Document tDocSet = new Document("$set", pTestMessage.getMongoDocument());
-        UpdateResult tUpdSts = mTestCollection.updateOne(tFilter, tDocSet, new UpdateOptions());
-        return tUpdSts;
-    }
-
-
-    public UpdateResult updateTestMessage(TestMessage pTestMessage, boolean pUpdateAllowInsert) {
-        UpdateOptions tOptions = new UpdateOptions().upsert(pUpdateAllowInsert);
-
-        Bson tKeyFilter = Filters.and(
-                Filters.eq("intValue", pTestMessage.getIntValue()),
-                Filters.eq("stringValue", pTestMessage.getStringValue()));
-
-
-        Document tDocSet = new Document("$set", pTestMessage.getMongoDocument());
-
-        UpdateResult tUpdSts = mTestCollection.updateOne(tKeyFilter, tDocSet, tOptions);
-        return tUpdSts;
-    }
-
-
-    // Error?
-    public UpdateResult updateTestMessage(int pIntValue, String pStringValue, TestMessage pTestMessage, boolean pUpdateAllowInsert) {
-        UpdateOptions tOptions = new UpdateOptions().upsert(pUpdateAllowInsert);
-
-        Bson tKeyFilter = Filters.and(
-                Filters.eq("intValue", pIntValue),
-                Filters.eq("stringValue", pStringValue));
-
-
-        Document tDocSet = new Document("$set", pTestMessage.getMongoDocument());
-
-        UpdateResult tUpdSts = mTestCollection.updateOne(tKeyFilter, tDocSet, tOptions);
-        return tUpdSts;
-    }
-
-    public UpdateResult updateTestMessage(Bson pFilter, TestMessage pTestMessage, boolean pUpdateAllowInsert) {
-        UpdateOptions tOptions = new UpdateOptions().upsert(pUpdateAllowInsert);
-        Document tDocSet = new Document("$set", pTestMessage.getMongoDocument());
-        UpdateResult tUpdSts = mTestCollection.updateOne(pFilter, tDocSet, tOptions);
-        return tUpdSts;
-    }
-
-    /**
-     * CRUD FIND methods
-     */
-
-    public List<TestMessage> findTestMessage(Bson pFilter) {
-        return findTestMessage(pFilter, null);
-    }
-
-    public List<TestMessage> findTestMessage(Bson pFilter, Bson pSortDoc) {
-
-        FindIterable<Document> tDocuments = (pSortDoc == null) ? this.mTestCollection.find(pFilter) :
-                this.mTestCollection.find(pFilter).sort(pSortDoc);
-
-
-        if (tDocuments == null) {
-            return null;
-        }
-
-        List<TestMessage> tResult = new ArrayList<>();
-        MongoCursor<Document> tIter = tDocuments.iterator();
-        while (tIter.hasNext()) {
-            Document tDoc = tIter.next();
-            TestMessage tTestMessage = new TestMessage();
-            tTestMessage.decodeMongoDocument(tDoc);
-            tResult.add(tTestMessage);
-        }
-        return tResult;
-    }
-
-
-    public List<TestMessage> findAllTestMessage() {
-        List<TestMessage> tResult = new ArrayList<>();
-
-        FindIterable<Document> tDocuments = this.mTestCollection.find();
-        MongoCursor<Document> tIter = tDocuments.iterator();
-        while (tIter.hasNext()) {
-            Document tDoc = tIter.next();
-            TestMessage tTestMessage = new TestMessage();
-            tTestMessage.decodeMongoDocument(tDoc);
-            tResult.add(tTestMessage);
-        }
-        return tResult;
-    }
-
-    public TestMessage findTestMessageByMongoId(String pMongoObjectId) {
-        Bson tFilter = Filters.eq("_id", new ObjectId(pMongoObjectId));
-
-        FindIterable<Document> tDocuments = this.mTestCollection.find(tFilter);
-        if (tDocuments == null) {
-            return null;
-        }
-
-        List<TestMessage> tResult = new ArrayList<>();
-        MongoCursor<Document> tIter = tDocuments.iterator();
-        while (tIter.hasNext()) {
-            Document tDoc = tIter.next();
-            TestMessage tTestMessage = new TestMessage();
-            tTestMessage.decodeMongoDocument(tDoc);
-            tResult.add(tTestMessage);
-        }
-        return (tResult.size() > 0) ? tResult.get(0) : null;
-    }
-
-
-    public List<TestMessage> findTestMessage(int pIntValue, String pStringValue) {
-
-        Bson tKeyFilter = Filters.and(
-                Filters.eq("intValue", pIntValue),
-                Filters.eq("stringValue", pStringValue));
-
-
-        FindIterable<Document> tDocuments = this.mTestCollection.find(tKeyFilter);
-        if (tDocuments == null) {
-            return null;
-        }
-
-        List<TestMessage> tResult = new ArrayList<>();
-        MongoCursor<Document> tIter = tDocuments.iterator();
-        while (tIter.hasNext()) {
-            Document tDoc = tIter.next();
-            TestMessage tTestMessage = new TestMessage();
-            tTestMessage.decodeMongoDocument(tDoc);
-            tResult.add(tTestMessage);
-        }
-        return tResult;
-    }
-
-
-    public List<TestMessage> findTestMessageByIntValue(int pIntValue) {
-        List<TestMessage> tResult = new ArrayList<>();
-
-        Bson tKeyFilter = Filters.eq("intValue", pIntValue);
-
-        FindIterable<Document> tDocuments = this.mTestCollection.find(tKeyFilter);
-        MongoCursor<Document> tIter = tDocuments.iterator();
-        while (tIter.hasNext()) {
-            Document tDoc = tIter.next();
-            TestMessage tTestMessage = new TestMessage();
-            tTestMessage.decodeMongoDocument(tDoc);
-            tResult.add(tTestMessage);
-        }
-        return tResult;
-    }
-
-    public List<TestMessage> findTestMessageByStringValue(String pStringValue) {
-        List<TestMessage> tResult = new ArrayList<>();
-
-        Bson tKeyFilter = Filters.eq("stringValue", pStringValue);
-
-        FindIterable<Document> tDocuments = this.mTestCollection.find(tKeyFilter);
-        MongoCursor<Document> tIter = tDocuments.iterator();
-        while (tIter.hasNext()) {
-            Document tDoc = tIter.next();
-            TestMessage tTestMessage = new TestMessage();
-            tTestMessage.decodeMongoDocument(tDoc);
-            tResult.add(tTestMessage);
-        }
-        return tResult;
-    }
-
-
-    class DbKey {
-        String mKeyName;
-        boolean mUnique;
-
-        DbKey(String pKeyName, boolean pUnique) {
-            mKeyName = pKeyName;
-            mUnique = pUnique;
-        }
-    }
-
+  }
 }
-            

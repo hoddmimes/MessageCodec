@@ -1,5 +1,3 @@
-
-
 /*
  * Copyright (c)  Hoddmimes Solution AB 2021.
  *
@@ -19,37 +17,31 @@
 
 package generated;
 
-import com.hoddmimes.transform.MessageDecoder;
-import com.hoddmimes.transform.MessageFactoryInterface;
-import com.hoddmimes.transform.MessageInterface;
-
+import com.hoddmimes.transform.*;
 import java.nio.ByteBuffer;
-
 
 @SuppressWarnings({"WeakerAccess", "unused", "unchecked"})
 public class MessageFactory implements MessageFactoryInterface {
 
+  public int getMessageId(byte[] pBuffer) {
+    ByteBuffer byteBuffer = ByteBuffer.wrap(pBuffer);
+    return byteBuffer.getInt();
+  }
 
-    public int getMessageId(byte[] pBuffer) {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(pBuffer);
-        return byteBuffer.getInt();
-    }
+  @Override
+  public MessageInterface getMessageInstance(byte[] pBuffer) {
+    int tMessageId = getMessageId(pBuffer);
 
-    @Override
-    public MessageInterface getMessageInstance(byte[] pBuffer) {
-        int tMessageId = getMessageId(pBuffer);
-
-        switch (tMessageId) {
-
-            case TestMessage.ID: {
-                TestMessage tMessage = new TestMessage();
-                tMessage.decode(new MessageDecoder(pBuffer));
-                return tMessage;
-            }
-
-            default:
-                return null;
+    switch (tMessageId) {
+      case TestMessage.ID:
+        {
+          TestMessage tMessage = new TestMessage();
+          tMessage.decode(new MessageDecoder(pBuffer));
+          return tMessage;
         }
+
+      default:
+        return null;
     }
+  }
 }
-		

@@ -1,3 +1,6 @@
+
+
+
 buildscript {
     repositories { flatDir name: 'libs', dirs: "../libs" }
     dependencies { classpath 'com.hoddmimes.versionplugin:versionplugin:1.0' }
@@ -5,6 +8,7 @@ buildscript {
 
 plugins {
     id 'java'
+    id "com.diffplug.spotless" version "6.25.0"
 }
 
 
@@ -19,8 +23,9 @@ def trnsVrs = tasks.transformVersion.version()
 
 spotless {
     java {
+        target("**/generated/*.java")
         toggleOffOn()
-        eclipse().configFile("${project.rootDir}/tools/eclipse-java-formatter.xml")
+        googleJavaFormat()
         indentWithSpaces()
         removeUnusedImports()
     }
@@ -94,7 +99,7 @@ buildTestJar.dependsOn( 'generateTestClasses', ':samples:compileTestJava',':mess
 
 compileJava.dependsOn('generateTestClasses')
 
-classes.finalizedBy(buildTestJar)
+classes.finalizedBy(buildTestJar, 'spotlessApply')
 clean.dependsOn(deleteGenerated)
 
 
